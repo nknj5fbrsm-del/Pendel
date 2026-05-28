@@ -13,7 +13,7 @@ Baue eine statische Web-App auf Deutsch für ein chaotisches **Doppelpendel** mi
 - **Grid:** Sidebar links `minmax(240px, 300px)`, rechts Hauptbereich; `align-items: stretch`.
 - **Sidebar:** Titel „Doppelpendel“, Kurztext (Lagrange, Chaos), fünf Blöcke mit exakt diesem Inhalt:
   - **Bild:** weiße Referenzlinie, rosa Regenbogen-Spur; Legende „Helle Melodie“ (blau) / „Warme Melodie“ (rosa).
-  - **Winkelmaß:** Pendel bleibt beim Scrollen sichtbar; Kreis mit Strichen alle 15°, Zahlen alle 30°; auf größter Bahn der rosa Masse; 0° unten, 90° rechts (Referenzlinie), 180° oben, 270° links; θ₁ am blauen Arm, θ₂ an rosa Masse.
+  - **Winkelmaß:** Kreis mit Strichen alle 15°, Zahlen alle 30°; auf größter Bahn der rosa Masse; 0° unten, 90° rechts (Referenzlinie), 180° oben, 270° links; θ₁ am blauen Arm, θ₂ an rosa Masse.
   - **Click (nur blau):** zusätzlich zur Melodie, wenn Linienschnitt und ω₁-Richtungswechsel innerhalb ca. 0,25 s zusammenfallen.
   - **Klang:** beim Linienübertritt Pentatonik mit variabler Höhe, Lautstärke, Dauer; blau hell, rosa warm.
   - **Aufnahme:** Button „Aufnahme“ / „Aufnahme ●“, Download .webm und .wav unter dem Pendel.
