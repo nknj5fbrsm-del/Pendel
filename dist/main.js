@@ -727,8 +727,8 @@ class Renderer {
         const angleRadius = this.angleCircleRadius(params, scale);
         this.drawAngleScale(cx, cy, angleRadius);
         this.updateAndDrawTrail(this.trailBob2);
-        this.ctx.strokeStyle = "rgba(255, 255, 255, 0.06)";
-        this.ctx.lineWidth = 0.5;
+        this.ctx.strokeStyle = "rgba(255, 255, 255, 0.2)";
+        this.ctx.lineWidth = 0.6;
         this.ctx.beginPath();
         this.ctx.moveTo(0, cy);
         this.ctx.lineTo(w, cy);
@@ -775,28 +775,28 @@ class Renderer {
         this.ctx.save();
         this.ctx.shadowBlur = 0;
         this.ctx.font = '500 9px -apple-system, BlinkMacSystemFont, "SF Pro Text", system-ui, sans-serif';
-        this.ctx.strokeStyle = "rgba(255, 255, 255, 0.08)";
-        this.ctx.lineWidth = 0.5;
+        this.ctx.strokeStyle = "rgba(255, 255, 255, 0.22)";
+        this.ctx.lineWidth = 0.65;
         this.ctx.beginPath();
         this.ctx.arc(cx, cy, radius, 0, Math.PI * 2);
         this.ctx.stroke();
         for (let deg = 0; deg < 360; deg += 15) {
             const rad = (deg * Math.PI) / 180;
             const major = deg % 30 === 0;
-            const tickLen = major ? 7 : 4;
+            const tickLen = major ? 8 : 5;
             const sin = Math.sin(rad);
             const cos = Math.cos(rad);
             this.ctx.strokeStyle = major
-                ? "rgba(255, 255, 255, 0.22)"
-                : "rgba(255, 255, 255, 0.1)";
-            this.ctx.lineWidth = major ? 0.55 : 0.35;
+                ? "rgba(255, 255, 255, 0.48)"
+                : "rgba(255, 255, 255, 0.24)";
+            this.ctx.lineWidth = major ? 0.75 : 0.5;
             this.ctx.beginPath();
             this.ctx.moveTo(cx + radius * sin, cy + radius * cos);
             this.ctx.lineTo(cx + (radius - tickLen) * sin, cy + (radius - tickLen) * cos);
             this.ctx.stroke();
             if (major) {
                 const labelR = radius + 10;
-                this.ctx.fillStyle = "rgba(255, 255, 255, 0.28)";
+                this.ctx.fillStyle = "rgba(255, 255, 255, 0.52)";
                 this.ctx.textAlign = "center";
                 this.ctx.textBaseline = "middle";
                 this.ctx.fillText(`${deg}°`, cx + labelR * sin, cy + labelR * cos);
@@ -806,7 +806,7 @@ class Renderer {
     }
     fadeTrail(trail) {
         for (const p of trail) {
-            p.life *= 0.994;
+            p.life *= 0.995;
         }
         while (trail.length > 0 && trail[0].life < 0.03) {
             trail.shift();
@@ -818,7 +818,7 @@ class Renderer {
         this.ctx.shadowBlur = 0;
         this.ctx.lineCap = "round";
         this.ctx.lineJoin = "round";
-        this.ctx.lineWidth = 0.45;
+        this.ctx.lineWidth = 0.7;
         for (let i = 1; i < trail.length; i += 1) {
             const prev = trail[i - 1];
             const p = trail[i];
@@ -827,8 +827,8 @@ class Renderer {
             if (dx * dx + dy * dy < 0.25)
                 continue;
             const t = i / trail.length;
-            const alpha = Math.max(0, p.life * (0.06 + t * 0.28));
-            this.ctx.strokeStyle = `rgba(255, 75, 120, ${alpha})`;
+            const alpha = Math.max(0, p.life * (0.14 + t * 0.5));
+            this.ctx.strokeStyle = `rgba(255, 85, 130, ${alpha})`;
             this.ctx.beginPath();
             this.ctx.moveTo(prev.x, prev.y);
             this.ctx.lineTo(p.x, p.y);
