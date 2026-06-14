@@ -783,7 +783,8 @@ class Renderer {
         }
     }
     updateAndDrawTrail(trail) {
-        this.fadeTrail(trail);
+        if (trail.length < 2)
+            return;
         this.ctx.shadowBlur = 0;
         this.ctx.lineCap = "round";
         this.ctx.lineJoin = "round";
@@ -796,7 +797,7 @@ class Renderer {
             if (dx * dx + dy * dy < 0.25)
                 continue;
             const t = i / trail.length;
-            const alpha = Math.max(0, p.life * (0.08 + t * 0.22));
+            const alpha = Math.max(0, p.life * (0.06 + t * 0.28));
             this.ctx.strokeStyle = `rgba(255, 75, 120, ${alpha})`;
             this.ctx.beginPath();
             this.ctx.moveTo(prev.x, prev.y);
@@ -895,6 +896,45 @@ function createAnchor(url, fileName, text) {
     a.download = fileName;
     a.textContent = text;
     return a;
+}
+/** iOS/Android: AudioContext muss synchron im Tap-Handler angestossen werden. */
+function primeAudioContextSync() {
+    const ctx = Tone.getContext().rawContext;
+    if (ctx.state === "running")
+        return;
+    try {
+        const buffer = ctx.createBuffer(1, 1, ctx.sampleRate);
+        const source = ctx.createBufferSource();
+        source.buffer = buffer;
+        source.connect(ctx.destination);
+        source.start(0);
+    }
+    catch {
+        // Stille Probe nicht moeglich — resume reicht oft.
+    }
+    void ctx.resume();
+}
+async function ensureAudioRunning() {
+    await Tone.start();
+    const ctx = Tone.getContext().rawContext;
+    if (ctx.state !== "running") {
+        await ctx.resume();
+    }
+    Tone.Destination.volume.value = 1;
+    Tone.Destination.mute = false;
+    return ctx.state === "running";
+}
+let lastAudioResumeAttempt = 0;
+function keepAudioAlive() {
+    const now = performance.now();
+    if (now - lastAudioResumeAttempt < 1500)
+        return;
+    const ctx = Tone.getContext().rawContext;
+    if (ctx.state !== "suspended")
+        return;
+    lastAudioResumeAttempt = now;
+    primeAudioContextSync();
+    void ctx.resume();
 }
 async function decodeToWavBlob(blob) {
     const arrayBuffer = await blob.arrayBuffer();
@@ -996,6 +1036,17 @@ function bootstrap() {
     renderer.resize();
     renderer.resetVisuals();
     window.addEventListener("resize", () => renderer.resize());
+    document.addEventListener("visibilitychange", () => {
+        if (document.visibilityState === "visible" && running && !paused) {
+            primeAudioContextSync();
+            void ensureAudioRunning();
+        }
+    });
+    const unlockOnTouch = () => {
+        primeAudioContextSync();
+        document.removeEventListener("touchstart", unlockOnTouch, true);
+    };
+    document.addEventListener("touchstart", unlockOnTouch, { capture: true, passive: true });
     let audioEngine = null;
     let recorder = null;
     let audioBootstrapping = false;
@@ -1056,6 +1107,7 @@ function bootstrap() {
         const boundaryRadius = computeBoundaryRadiusPx(w, h, params);
         let ballState = null;
         if (running && !paused) {
+            keepAudioAlive();
             const dt = Math.min(dtRaw, 0.03);
             const subSteps = 3;
             for (let i = 0; i < subSteps; i += 1) {
@@ -1096,10 +1148,16 @@ function bootstrap() {
         audioBootstrapping = true;
         startButton.disabled = true;
         try {
-            await Tone.start();
+            primeAudioContextSync();
             if (!audioEngine) {
                 audioEngine = new AudioEngine();
                 recorder = new RecorderController(setStatus, downloadsEl);
+            }
+            const audioOk = await ensureAudioRunning();
+            if (!audioOk) {
+                startButton.disabled = false;
+                setStatus("Audio blockiert — bitte erneut tippen", "error");
+                return;
             }
             if (!started) {
                 started = true;
@@ -1122,10 +1180,14 @@ function bootstrap() {
             audioBootstrapping = false;
         }
     });
-    pauseButton.addEventListener("click", () => {
+    pauseButton.addEventListener("click", async () => {
         if (!started || !running)
             return;
         paused = !paused;
+        if (!paused) {
+            primeAudioContextSync();
+            await ensureAudioRunning();
+        }
         pauseButton.textContent = paused ? "Weiter" : "Pause";
         setStatus(paused ? "Pausiert" : "Simulation aktiv", paused ? "paused" : "active");
         const ballState = running ? flyingBall.getState() : null;
@@ -1139,6 +1201,8 @@ function bootstrap() {
     recordButton.addEventListener("click", () => {
         if (!recorder || !started)
             return;
+        primeAudioContextSync();
+        void ensureAudioRunning();
         if (!recording) {
             recorder.start();
             recording = true;
