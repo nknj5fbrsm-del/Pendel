@@ -1317,21 +1317,7 @@ const INITIAL_STATE: PendulumState = {
   omega2: 0,
 };
 
-/** Nur horizontale Verschiebung nach Pinch-Zoom korrigieren — vertikales Scrollen bleibt. */
-function fixHorizontalViewportDrift(): void {
-  const drift = window.scrollX || document.documentElement.scrollLeft || document.body.scrollLeft;
-  if (drift !== 0) {
-    window.scrollTo(0, window.scrollY);
-  }
-  document.documentElement.scrollLeft = 0;
-  document.body.scrollLeft = 0;
-}
-
 function bootstrap(): void {
-  fixHorizontalViewportDrift();
-  window.addEventListener("load", fixHorizontalViewportDrift);
-  window.visualViewport?.addEventListener("resize", fixHorizontalViewportDrift);
-
   const canvas = document.getElementById("simCanvas") as HTMLCanvasElement;
   const startButton = document.getElementById("startButton") as HTMLButtonElement;
   const pauseButton = document.getElementById("pauseButton") as HTMLButtonElement;

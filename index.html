@@ -872,11 +872,13 @@
           display: flex;
           flex-direction: column;
           width: 100%;
+          min-height: 0;
         }
 
         .main {
           order: 1;
           width: 100%;
+          min-height: 0;
         }
 
         .sidebar {
@@ -886,6 +888,9 @@
           width: 100%;
           border-right: none;
           border-top: 1px solid var(--hairline);
+          backdrop-filter: none;
+          -webkit-backdrop-filter: none;
+          background: #121214;
         }
 
         .stage-inner {
@@ -893,7 +898,18 @@
         }
 
         .transport {
+          position: relative;
           justify-content: center;
+          backdrop-filter: none;
+          -webkit-backdrop-filter: none;
+          background: rgba(0, 0, 0, 0.94);
+        }
+
+        .stage-aura--wide,
+        .stage-aura--ring,
+        .canvas-wrap,
+        .canvas-wrap::after {
+          animation: none;
         }
 
         .status-badge {
@@ -1297,6 +1313,6 @@
       </main>
     </div>
 
-    <script type="module" src="./dist/main.js?v=scroll-fix"></script>
+    <script type="module" src="./dist/main.js?v=scroll-smooth"></script>
   </body>
 </html>

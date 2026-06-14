@@ -1041,19 +1041,7 @@ const INITIAL_STATE = {
     omega1: 0,
     omega2: 0,
 };
-/** Nur horizontale Verschiebung nach Pinch-Zoom korrigieren — vertikales Scrollen bleibt. */
-function fixHorizontalViewportDrift() {
-    const drift = window.scrollX || document.documentElement.scrollLeft || document.body.scrollLeft;
-    if (drift !== 0) {
-        window.scrollTo(0, window.scrollY);
-    }
-    document.documentElement.scrollLeft = 0;
-    document.body.scrollLeft = 0;
-}
 function bootstrap() {
-    fixHorizontalViewportDrift();
-    window.addEventListener("load", fixHorizontalViewportDrift);
-    window.visualViewport?.addEventListener("resize", fixHorizontalViewportDrift);
     const canvas = document.getElementById("simCanvas");
     const startButton = document.getElementById("startButton");
     const pauseButton = document.getElementById("pauseButton");
