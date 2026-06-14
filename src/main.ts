@@ -746,17 +746,37 @@ class AudioEngine {
 type UiStatus = "ready" | "active" | "paused" | "stopped" | "recording" | "processing" | "error";
 
 class RecorderController {
-  private streamDestination: MediaStreamAudioDestinationNode;
+  private streamDestination: MediaStreamAudioDestinationNode | null = null;
+  private tapConnected = false;
   private recorder: MediaRecorder | null = null;
   private chunks: Blob[] = [];
 
   constructor(
     private readonly setStatus: (text: string, state: UiStatus) => void,
     private readonly downloadsEl: HTMLElement,
-  ) {
-    const rawCtx: AudioContext = Tone.getContext().rawContext;
-    this.streamDestination = rawCtx.createMediaStreamDestination();
-    Tone.Destination.connect(this.streamDestination);
+  ) {}
+
+  /** Aufnahme-Tap nur während Recording — sonst kein Live-Ton auf iOS. */
+  private connectTap(): MediaStreamAudioDestinationNode {
+    const rawCtx = Tone.getContext().rawContext as AudioContext;
+    if (!this.streamDestination) {
+      this.streamDestination = rawCtx.createMediaStreamDestination();
+    }
+    if (!this.tapConnected) {
+      Tone.Destination.connect(this.streamDestination);
+      this.tapConnected = true;
+    }
+    return this.streamDestination;
+  }
+
+  private disconnectTap(): void {
+    if (!this.tapConnected || !this.streamDestination) return;
+    try {
+      Tone.Destination.disconnect(this.streamDestination);
+    } catch {
+      // Tap war bereits getrennt.
+    }
+    this.tapConnected = false;
   }
 
   start(): void {
@@ -768,13 +788,15 @@ class RecorderController {
     const mimeType = preferredTypes.find((t) => MediaRecorder.isTypeSupported(t)) ?? "";
 
     this.chunks = [];
-    this.recorder = new MediaRecorder(this.streamDestination.stream, mimeType ? { mimeType } : undefined);
+    const tap = this.connectTap();
+    this.recorder = new MediaRecorder(tap.stream, mimeType ? { mimeType } : undefined);
 
     this.recorder.ondataavailable = (ev) => {
       if (ev.data.size > 0) this.chunks.push(ev.data);
     };
 
     this.recorder.onstop = async () => {
+      this.disconnectTap();
       const blob = new Blob(this.chunks, {
         type: this.recorder?.mimeType || "audio/webm",
       });
@@ -792,6 +814,13 @@ class RecorderController {
 
     this.recorder.stop();
     this.setStatus("Aufnahme wird verarbeitet", "processing");
+  }
+
+  release(): void {
+    if (this.recorder && this.recorder.state === "recording") {
+      this.recorder.stop();
+    }
+    this.disconnectTap();
   }
 
   private async createDownloadLinks(sourceBlob: Blob): Promise<void> {
@@ -1159,7 +1188,15 @@ function createAnchor(url: string, fileName: string, text: string): HTMLAnchorEl
 }
 
 /** iOS/Android: AudioContext muss synchron im Tap-Handler angestossen werden. */
+function configureMobileAudioSession(): void {
+  const nav = navigator as Navigator & { audioSession?: { type: string } };
+  if (nav.audioSession) {
+    nav.audioSession.type = "playback";
+  }
+}
+
 function primeAudioContextSync(): void {
+  configureMobileAudioSession();
   const ctx = Tone.getContext().rawContext as AudioContext;
   if (ctx.state === "running") return;
 
@@ -1177,6 +1214,7 @@ function primeAudioContextSync(): void {
 }
 
 async function ensureAudioRunning(): Promise<boolean> {
+  configureMobileAudioSession();
   await Tone.start();
   const ctx = Tone.getContext().rawContext as AudioContext;
   if (ctx.state !== "running") {
@@ -1279,7 +1317,18 @@ const INITIAL_STATE: PendulumState = {
   omega2: 0,
 };
 
+function resetPageViewport(): void {
+  window.scrollTo(0, 0);
+  document.documentElement.scrollLeft = 0;
+  document.body.scrollLeft = 0;
+}
+
 function bootstrap(): void {
+  resetPageViewport();
+  window.addEventListener("load", resetPageViewport);
+  window.visualViewport?.addEventListener("resize", resetPageViewport);
+  window.visualViewport?.addEventListener("scroll", resetPageViewport);
+
   const canvas = document.getElementById("simCanvas") as HTMLCanvasElement;
   const startButton = document.getElementById("startButton") as HTMLButtonElement;
   const pauseButton = document.getElementById("pauseButton") as HTMLButtonElement;
@@ -1371,7 +1420,7 @@ function bootstrap(): void {
 
   const stopSimulation = (): void => {
     if (recording) {
-      recorder?.stop();
+      recorder?.release();
       recording = false;
       recordButton.classList.remove("active");
     }

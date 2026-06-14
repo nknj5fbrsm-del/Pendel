@@ -586,11 +586,33 @@ class RecorderController {
     constructor(setStatus, downloadsEl) {
         this.setStatus = setStatus;
         this.downloadsEl = downloadsEl;
+        this.streamDestination = null;
+        this.tapConnected = false;
         this.recorder = null;
         this.chunks = [];
+    }
+    /** Aufnahme-Tap nur während Recording — sonst kein Live-Ton auf iOS. */
+    connectTap() {
         const rawCtx = Tone.getContext().rawContext;
-        this.streamDestination = rawCtx.createMediaStreamDestination();
-        Tone.Destination.connect(this.streamDestination);
+        if (!this.streamDestination) {
+            this.streamDestination = rawCtx.createMediaStreamDestination();
+        }
+        if (!this.tapConnected) {
+            Tone.Destination.connect(this.streamDestination);
+            this.tapConnected = true;
+        }
+        return this.streamDestination;
+    }
+    disconnectTap() {
+        if (!this.tapConnected || !this.streamDestination)
+            return;
+        try {
+            Tone.Destination.disconnect(this.streamDestination);
+        }
+        catch {
+            // Tap war bereits getrennt.
+        }
+        this.tapConnected = false;
     }
     start() {
         if (this.recorder && this.recorder.state === "recording") {
@@ -599,12 +621,14 @@ class RecorderController {
         const preferredTypes = ["audio/webm;codecs=opus", "audio/webm", "audio/ogg;codecs=opus"];
         const mimeType = preferredTypes.find((t) => MediaRecorder.isTypeSupported(t)) ?? "";
         this.chunks = [];
-        this.recorder = new MediaRecorder(this.streamDestination.stream, mimeType ? { mimeType } : undefined);
+        const tap = this.connectTap();
+        this.recorder = new MediaRecorder(tap.stream, mimeType ? { mimeType } : undefined);
         this.recorder.ondataavailable = (ev) => {
             if (ev.data.size > 0)
                 this.chunks.push(ev.data);
         };
         this.recorder.onstop = async () => {
+            this.disconnectTap();
             const blob = new Blob(this.chunks, {
                 type: this.recorder?.mimeType || "audio/webm",
             });
@@ -619,6 +643,12 @@ class RecorderController {
         }
         this.recorder.stop();
         this.setStatus("Aufnahme wird verarbeitet", "processing");
+    }
+    release() {
+        if (this.recorder && this.recorder.state === "recording") {
+            this.recorder.stop();
+        }
+        this.disconnectTap();
     }
     async createDownloadLinks(sourceBlob) {
         this.downloadsEl.innerHTML = "";
@@ -898,7 +928,14 @@ function createAnchor(url, fileName, text) {
     return a;
 }
 /** iOS/Android: AudioContext muss synchron im Tap-Handler angestossen werden. */
+function configureMobileAudioSession() {
+    const nav = navigator;
+    if (nav.audioSession) {
+        nav.audioSession.type = "playback";
+    }
+}
 function primeAudioContextSync() {
+    configureMobileAudioSession();
     const ctx = Tone.getContext().rawContext;
     if (ctx.state === "running")
         return;
@@ -915,6 +952,7 @@ function primeAudioContextSync() {
     void ctx.resume();
 }
 async function ensureAudioRunning() {
+    configureMobileAudioSession();
     await Tone.start();
     const ctx = Tone.getContext().rawContext;
     if (ctx.state !== "running") {
@@ -1003,7 +1041,16 @@ const INITIAL_STATE = {
     omega1: 0,
     omega2: 0,
 };
+function resetPageViewport() {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollLeft = 0;
+    document.body.scrollLeft = 0;
+}
 function bootstrap() {
+    resetPageViewport();
+    window.addEventListener("load", resetPageViewport);
+    window.visualViewport?.addEventListener("resize", resetPageViewport);
+    window.visualViewport?.addEventListener("scroll", resetPageViewport);
     const canvas = document.getElementById("simCanvas");
     const startButton = document.getElementById("startButton");
     const pauseButton = document.getElementById("pauseButton");
@@ -1075,7 +1122,7 @@ function bootstrap() {
     };
     const stopSimulation = () => {
         if (recording) {
-            recorder?.stop();
+            recorder?.release();
             recording = false;
             recordButton.classList.remove("active");
         }

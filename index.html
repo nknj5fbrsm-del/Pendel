@@ -2,7 +2,7 @@
 <html lang="de">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
     <meta name="theme-color" content="#000000" />
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <title>Doppelpendel</title>
@@ -59,11 +59,20 @@
         -webkit-font-smoothing: antialiased;
         -moz-osx-font-smoothing: grayscale;
         text-rendering: optimizeLegibility;
+        overflow-x: hidden;
+        width: 100%;
+        max-width: 100%;
       }
 
       body {
         margin: 0;
         min-height: 100vh;
+        min-height: 100dvh;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+        overscroll-behavior-x: none;
+        touch-action: manipulation;
         color: var(--label-primary);
         background: var(--bg);
         background-image:
@@ -79,6 +88,10 @@
 
       .app {
         min-height: 100vh;
+        min-height: 100dvh;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
         display: grid;
         grid-template-columns: minmax(300px, 360px) 1fr;
         align-items: stretch;
@@ -479,7 +492,11 @@
         grid-column: 2;
         grid-row: 1;
         min-width: 0;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
         min-height: 100vh;
+        min-height: 100dvh;
         display: flex;
         flex-direction: column;
         align-items: stretch;
@@ -704,8 +721,9 @@
 
       .stage-inner {
         position: relative;
-        width: min(calc(100vw - 400px), 580px);
+        width: min(100%, 580px);
         max-width: 100%;
+        margin: 0 auto;
         isolation: isolate;
       }
 
@@ -869,22 +887,25 @@
         .app {
           display: flex;
           flex-direction: column;
+          width: 100%;
         }
 
         .main {
           order: 1;
+          width: 100%;
         }
 
         .sidebar {
           order: 2;
           position: static;
           max-height: none;
+          width: 100%;
           border-right: none;
           border-top: 1px solid var(--hairline);
         }
 
         .stage-inner {
-          width: min(92vw, 480px);
+          width: min(92%, 480px);
         }
 
         .transport {
@@ -1295,6 +1316,6 @@
       </main>
     </div>
 
-    <script type="module" src="./dist/main.js?v=mobile-audio"></script>
+    <script type="module" src="./dist/main.js?v=mobile-audio-2"></script>
   </body>
 </html>
