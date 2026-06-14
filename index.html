@@ -72,7 +72,8 @@
         max-width: 100%;
         overflow-x: hidden;
         overscroll-behavior-x: none;
-        touch-action: manipulation;
+        overscroll-behavior-y: auto;
+        touch-action: pan-y;
         color: var(--label-primary);
         background: var(--bg);
         background-image:
@@ -751,6 +752,7 @@
         aspect-ratio: 1;
         border-radius: 50%;
         padding: 1px;
+        touch-action: pan-y;
         background: linear-gradient(
           145deg,
           rgba(255, 255, 255, 0.14),
@@ -805,6 +807,8 @@
         height: 100%;
         display: block;
         border-radius: 50%;
+        pointer-events: none;
+        touch-action: pan-y;
         background: radial-gradient(circle at 50% 42%, #141416 0%, #000000 72%);
       }
 
@@ -879,6 +883,18 @@
           order: 1;
           width: 100%;
           min-height: 0;
+          overflow: visible;
+        }
+
+        .stage {
+          flex: none;
+          animation: none;
+          touch-action: pan-y;
+        }
+
+        .stage-inner,
+        .canvas-wrap {
+          touch-action: pan-y;
         }
 
         .sidebar {
