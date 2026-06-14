@@ -2,7 +2,7 @@
 
 Baue eine statische Web-App auf Deutsch für ein chaotisches **Doppelpendel** mit Canvas, ereignisgesteuertem Klang (Tone.js) und Audio-Aufnahme.
 
-**Stack:** `index.html` (Markup + CSS), `src/main.ts` → `tsc` → `dist/main.js`, Tone.js **14.8.49** per CDN (`https://unpkg.com/tone@14.8.49/build/Tone.js`), `declare const Tone: any` in TS. Lokal: `npm run build`, `python3 -m http.server 5173`, Seite per HTTP öffnen.
+**Stack:** `index.html` (Markup + CSS), `src/main.ts` → `tsc` → `dist/main.js`, Tone.js **14.8.49** per CDN (`https://unpkg.com/tone@14.8.49/build/Tone.js`), `declare const Tone: any` in TS. Lokal: `npm run build`, `npm start` (Port **5180**), Seite per HTTP öffnen.
 
 **Dateien:** `package.json` (nur `typescript` als devDependency, Scripts `build`/`dev`), `tsconfig.json` (ES2020, strict, `outDir: dist`, `rootDir: src`).
 

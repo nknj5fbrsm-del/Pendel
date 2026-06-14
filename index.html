@@ -3,249 +3,783 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#000000" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
     <title>Doppelpendel</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600&family=Outfit:wght@300;400;500&display=swap"
-      rel="stylesheet"
-    />
     <style>
       :root {
         color-scheme: dark;
-        font-family: "Outfit", system-ui, sans-serif;
-        --void: #06040c;
-        --deep: #0e0a18;
-        --panel: rgba(18, 12, 32, 0.72);
-        --line: rgba(180, 140, 255, 0.12);
-        --text: #e8e0f8;
-        --muted: #9b8fb8;
-        --blue: #7eb8ff;
-        --pink: #ff7eb8;
-        --glow-blue: rgba(126, 184, 255, 0.35);
-        --glow-pink: rgba(255, 126, 184, 0.32);
-        --glow-violet: rgba(160, 120, 255, 0.2);
+        font-family:
+          -apple-system,
+          BlinkMacSystemFont,
+          "SF Pro Text",
+          "SF Pro Display",
+          "Segoe UI",
+          system-ui,
+          sans-serif;
+        --bg: #000000;
+        --bg-elevated: #1c1c1e;
+        --bg-secondary: #2c2c2e;
+        --bg-tertiary: #3a3a3c;
+        --glass: rgba(28, 28, 30, 0.78);
+        --glass-heavy: rgba(18, 18, 20, 0.92);
+        --separator: rgba(84, 84, 88, 0.45);
+        --hairline: rgba(255, 255, 255, 0.08);
+        --label-primary: rgba(255, 255, 255, 0.92);
+        --label-secondary: rgba(255, 255, 255, 0.55);
+        --label-tertiary: rgba(255, 255, 255, 0.28);
+        --accent-blue: #0a84ff;
+        --accent-blue-soft: rgba(10, 132, 255, 0.22);
+        --accent-pink: #ff375f;
+        --accent-pink-soft: rgba(255, 55, 95, 0.2);
+        --accent-violet: #bf5af2;
+        --accent-green: #30d158;
+        --accent-orange: #ff9f0a;
+        --accent-red: #ff453a;
+        --radius-sm: 8px;
+        --radius-md: 12px;
+        --radius-lg: 18px;
+        --radius-xl: 24px;
+        --radius-pill: 980px;
+        --ease-out: cubic-bezier(0.25, 0.1, 0.25, 1);
+        --ease-spring: cubic-bezier(0.34, 1.2, 0.64, 1);
+        --shadow-soft: 0 24px 80px rgba(0, 0, 0, 0.55);
+        --shadow-stage: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 40px 100px rgba(0, 0, 0, 0.65);
+        --toolbar-height: 4.5rem;
+        --fader-accent: rgba(255, 255, 255, 0.42);
       }
 
-      * {
+      *,
+      *::before,
+      *::after {
         box-sizing: border-box;
+      }
+
+      html {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        text-rendering: optimizeLegibility;
       }
 
       body {
         margin: 0;
         min-height: 100vh;
-        color: var(--text);
-        background: var(--void);
+        color: var(--label-primary);
+        background: var(--bg);
         background-image:
-          radial-gradient(ellipse 120% 80% at 50% -30%, rgba(88, 48, 140, 0.22), transparent 55%),
-          radial-gradient(ellipse 70% 50% at 0% 80%, rgba(40, 80, 140, 0.12), transparent),
-          radial-gradient(ellipse 60% 45% at 100% 70%, rgba(140, 50, 100, 0.1), transparent);
+          radial-gradient(ellipse 90% 60% at 50% -20%, rgba(10, 132, 255, 0.09), transparent 58%),
+          radial-gradient(ellipse 55% 40% at 100% 50%, rgba(191, 90, 242, 0.06), transparent),
+          radial-gradient(ellipse 50% 35% at 0% 80%, rgba(255, 55, 95, 0.05), transparent);
+      }
+
+      button,
+      input {
+        font: inherit;
       }
 
       .app {
-        --toolbar-sticky-height: 4.25rem;
+        min-height: 100vh;
         display: grid;
-        grid-template-columns: minmax(240px, 300px) 1fr;
+        grid-template-columns: minmax(300px, 360px) 1fr;
         align-items: stretch;
       }
+
+      /* ── Sidebar ── */
 
       .sidebar {
         grid-column: 1;
         grid-row: 1;
-        padding: 1.75rem 1.5rem 3rem;
-        border-right: 1px solid var(--line);
-        background: linear-gradient(180deg, rgba(14, 10, 24, 0.95), rgba(8, 6, 14, 0.6));
-        box-shadow: inset -1px 0 24px var(--glow-violet);
+        position: sticky;
+        top: 0;
+        align-self: start;
+        max-height: 100vh;
+        overflow-y: auto;
+        overflow-x: hidden;
+        padding: 1.5rem 1.25rem 2rem;
+        border-right: 1px solid var(--hairline);
+        background: var(--glass-heavy);
+        backdrop-filter: blur(40px) saturate(160%);
+        -webkit-backdrop-filter: blur(40px) saturate(160%);
+        scrollbar-width: thin;
+        scrollbar-color: var(--bg-tertiary) transparent;
+        animation: rise-in 0.55s var(--ease-out) both;
       }
 
-      .sidebar h1 {
-        margin: 0 0 1rem;
-        font-family: "Cinzel", serif;
-        font-size: 1.5rem;
-        font-weight: 600;
-        letter-spacing: 0.12em;
-        text-transform: uppercase;
-        color: var(--text);
-        text-shadow: 0 0 20px var(--glow-violet);
+      .sidebar::-webkit-scrollbar {
+        width: 6px;
       }
 
-      .sidebar p {
-        margin: 0 0 1rem;
-        font-size: 0.88rem;
-        font-weight: 300;
-        line-height: 1.65;
-        color: var(--muted);
+      .sidebar::-webkit-scrollbar-thumb {
+        background: var(--bg-tertiary);
+        border-radius: 99px;
       }
 
-      .sidebar .block {
-        margin-bottom: 1.25rem;
-        padding: 0.85rem 1rem;
-        border-radius: 10px;
-        border: 1px solid var(--line);
-        background: var(--panel);
-        box-shadow: 0 0 24px rgba(0, 0, 0, 0.25);
+      .brand {
+        margin-bottom: 1.35rem;
+        padding-bottom: 1.25rem;
+        border-bottom: 1px solid var(--hairline);
       }
 
-      .sidebar .block h2 {
-        margin: 0 0 0.5rem;
-        font-family: "Cinzel", serif;
-        font-size: 0.72rem;
-        font-weight: 600;
-        letter-spacing: 0.14em;
-        text-transform: uppercase;
-        color: var(--text);
-        opacity: 0.9;
-      }
-
-      .sidebar .block p {
-        margin: 0;
-        font-size: 0.8rem;
-      }
-
-      .legend {
-        display: flex;
-        flex-direction: column;
-        gap: 0.5rem;
-      }
-
-      .legend span {
+      .brand-mark {
         display: flex;
         align-items: center;
-        gap: 0.5rem;
-        font-size: 0.8rem;
-        color: var(--muted);
+        gap: 0.75rem;
+        margin-bottom: 0.65rem;
       }
 
-      .dot {
-        width: 0.5rem;
-        height: 0.5rem;
-        border-radius: 50%;
+      .brand-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        display: grid;
+        place-items: center;
+        background: linear-gradient(145deg, rgba(10, 132, 255, 0.28), rgba(191, 90, 242, 0.18));
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12);
+      }
+
+      .brand-icon svg {
+        width: 20px;
+        height: 20px;
+      }
+
+      .brand h1 {
+        margin: 0;
+        font-size: 1.35rem;
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        line-height: 1.15;
+      }
+
+      .brand-tagline {
+        margin: 0;
+        font-size: 0.8125rem;
+        font-weight: 400;
+        line-height: 1.55;
+        color: var(--label-secondary);
+      }
+
+      .controls {
+        display: flex;
+        flex-direction: column;
+        gap: 0.65rem;
+      }
+
+      .section {
+        border-radius: var(--radius-md);
+        border: 1px solid var(--hairline);
+        background: var(--glass);
+        backdrop-filter: blur(24px);
+        -webkit-backdrop-filter: blur(24px);
+        overflow: hidden;
+        transition: border-color 0.25s var(--ease-out);
+      }
+
+      .section[open] {
+        border-color: rgba(255, 255, 255, 0.11);
+      }
+
+      .section-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.85rem 1rem;
+        list-style: none;
+        cursor: pointer;
+        user-select: none;
+        transition: background 0.2s var(--ease-out);
+      }
+
+      .section-head::-webkit-details-marker {
+        display: none;
+      }
+
+      .section-head:hover {
+        background: rgba(255, 255, 255, 0.03);
+      }
+
+      .section-title-wrap {
+        display: flex;
+        align-items: center;
+        gap: 0.55rem;
+        min-width: 0;
+      }
+
+      .section-glyph {
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        display: grid;
+        place-items: center;
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--label-secondary);
         flex-shrink: 0;
       }
 
-      .dot.blue {
-        background: var(--blue);
-        box-shadow: 0 0 10px var(--glow-blue);
+      .section-glyph svg {
+        width: 13px;
+        height: 13px;
       }
 
-      .dot.pink {
-        background: var(--pink);
-        box-shadow: 0 0 10px var(--glow-pink);
+      .section-title {
+        font-size: 0.8125rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        color: var(--label-primary);
       }
 
-      .click-note {
-        border-left: 2px solid var(--blue);
-        padding-left: 0.75rem;
+      .section-chevron {
+        width: 18px;
+        height: 18px;
+        color: var(--label-tertiary);
+        transition: transform 0.28s var(--ease-spring);
+        flex-shrink: 0;
       }
 
-      .block-record {
-        border-left: 2px solid var(--pink);
-        padding-left: 0.75rem;
+      .section[open] .section-chevron {
+        transform: rotate(180deg);
       }
 
-      .block-record h2 {
-        color: var(--pink);
+      .section-body {
+        padding: 0 1rem 1rem;
       }
 
-      .click-note strong {
-        color: var(--blue);
+      .section-static {
+        padding: 0.85rem 1rem 1rem;
+      }
+
+      .section-static .section-title-wrap {
+        margin-bottom: 0.55rem;
+      }
+
+      .mixer-sub {
+        margin: 0.75rem 0 0.4rem;
+        padding-top: 0.6rem;
+        border-top: 1px solid var(--hairline);
+        font-size: 0.6875rem;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--label-tertiary);
+      }
+
+      .mixer-sub:first-of-type {
+        margin-top: 0;
+        padding-top: 0;
+        border-top: none;
+      }
+
+      .fader-bank {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+      }
+
+      .fader {
+        padding: 0.55rem 0.65rem;
+        border-radius: var(--radius-sm);
+        background: rgba(0, 0, 0, 0.22);
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        transition:
+          background 0.2s var(--ease-out),
+          border-color 0.2s var(--ease-out);
+      }
+
+      .fader:focus-within {
+        background: rgba(255, 255, 255, 0.04);
+        border-color: rgba(255, 255, 255, 0.08);
+      }
+
+      .fader-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 0.5rem;
+        margin-bottom: 0.5rem;
+      }
+
+      .fader-head label {
+        font-size: 0.75rem;
         font-weight: 500;
+        letter-spacing: -0.01em;
+        color: var(--label-secondary);
       }
+
+      .fader-readout {
+        font-variant-numeric: tabular-nums;
+        font-size: 0.6875rem;
+        font-weight: 600;
+        letter-spacing: 0.02em;
+        color: var(--label-primary);
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 6px;
+        padding: 0.2rem 0.45rem;
+        min-width: 2.4rem;
+        text-align: center;
+      }
+
+      .fader-track-wrap {
+        padding: 0.15rem 0;
+      }
+
+      .fader-input {
+        -webkit-appearance: none;
+        appearance: none;
+        width: 100%;
+        height: 28px;
+        margin: 0;
+        background: transparent;
+        cursor: pointer;
+        --fader-pct: 50%;
+        --fader-accent: rgba(255, 255, 255, 0.38);
+      }
+
+      .fader-input:active {
+        cursor: grabbing;
+      }
+
+      .fader-input:focus-visible {
+        outline: none;
+      }
+
+      .fader-input:focus-visible::-webkit-slider-thumb {
+        box-shadow:
+          0 1px 6px rgba(0, 0, 0, 0.45),
+          0 0 0 4px rgba(10, 132, 255, 0.28);
+      }
+
+      .fader-input::-webkit-slider-runnable-track {
+        height: 4px;
+        border-radius: 2px;
+        background: linear-gradient(
+          90deg,
+          var(--fader-accent) 0%,
+          var(--fader-accent) var(--fader-pct),
+          rgba(255, 255, 255, 0.1) var(--fader-pct),
+          rgba(255, 255, 255, 0.1) 100%
+        );
+      }
+
+      .fader-input::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 20px;
+        height: 20px;
+        margin-top: -8px;
+        border-radius: 50%;
+        background: #ffffff;
+        border: none;
+        box-shadow:
+          0 1px 4px rgba(0, 0, 0, 0.35),
+          0 0 0 0.5px rgba(0, 0, 0, 0.08);
+        transition: transform 0.15s var(--ease-spring);
+      }
+
+      .fader-input:active::-webkit-slider-thumb {
+        transform: scale(1.08);
+      }
+
+      .fader-input::-moz-range-track {
+        height: 4px;
+        border-radius: 2px;
+        background: rgba(255, 255, 255, 0.1);
+      }
+
+      .fader-input::-moz-range-progress {
+        height: 4px;
+        border-radius: 2px;
+        background: var(--fader-accent);
+      }
+
+      .fader-input::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+        border-radius: 50%;
+        border: none;
+        background: #ffffff;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.35);
+      }
+
+      .fader.blue {
+        --fader-accent: var(--accent-blue);
+      }
+
+      .fader.blue .fader-head label {
+        color: rgba(100, 180, 255, 0.95);
+      }
+
+      .fader.pink {
+        --fader-accent: var(--accent-pink);
+      }
+
+      .fader.pink .fader-head label {
+        color: rgba(255, 120, 150, 0.95);
+      }
+
+      .fader.speed {
+        --fader-accent: var(--accent-violet);
+      }
+
+      .section-record {
+        border-color: rgba(255, 55, 95, 0.14);
+        background: linear-gradient(165deg, rgba(255, 55, 95, 0.06), rgba(28, 28, 30, 0.78));
+      }
+
+      .record-hint {
+        margin: 0;
+        font-size: 0.75rem;
+        line-height: 1.55;
+        color: var(--label-secondary);
+      }
+
+      .section-record:has(#downloads:not(:empty)) .record-hint {
+        display: none;
+      }
+
+      #downloads {
+        display: flex;
+        flex-direction: column;
+        gap: 0.4rem;
+      }
+
+      #downloads:not(:empty) {
+        margin-top: 0.6rem;
+      }
+
+      #downloads a {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.4rem;
+        padding: 0.55rem 0.85rem;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--hairline);
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--accent-blue);
+        font-size: 0.75rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+        text-decoration: none;
+        transition:
+          background 0.2s var(--ease-out),
+          border-color 0.2s var(--ease-out),
+          transform 0.2s var(--ease-spring);
+      }
+
+      #downloads a:hover {
+        background: var(--accent-blue-soft);
+        border-color: rgba(10, 132, 255, 0.35);
+        transform: translateY(-1px);
+      }
+
+      /* ── Main / Stage ── */
 
       .main {
         grid-column: 2;
         grid-row: 1;
         min-width: 0;
+        min-height: 100vh;
         display: flex;
         flex-direction: column;
-        align-items: center;
-        align-self: stretch;
+        align-items: stretch;
       }
 
-      .toolbar {
+      .transport {
         position: sticky;
         top: 0;
         z-index: 50;
-        width: 100%;
         display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 1rem;
         flex-wrap: wrap;
+        padding: 0.85rem 1.5rem;
+        border-bottom: 1px solid var(--hairline);
+        background: rgba(0, 0, 0, 0.72);
+        backdrop-filter: blur(28px) saturate(150%);
+        -webkit-backdrop-filter: blur(28px) saturate(150%);
+        animation: rise-in 0.5s var(--ease-out) both;
+      }
+
+      .transport-primary {
+        display: flex;
+        align-items: center;
         gap: 0.5rem;
+        flex-wrap: wrap;
+      }
+
+      .transport-secondary {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        padding: 0.2rem;
+        border-radius: var(--radius-pill);
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--hairline);
+      }
+
+      .btn {
+        display: inline-flex;
         align-items: center;
         justify-content: center;
-        padding: 1rem 1.25rem;
-        border-bottom: 1px solid var(--line);
-        background: rgba(6, 4, 12, 0.9);
-        backdrop-filter: blur(12px);
-      }
-
-      button {
-        font: inherit;
-        font-size: 0.8rem;
-        font-weight: 500;
-        letter-spacing: 0.06em;
-        text-transform: uppercase;
-        padding: 0.55rem 1rem;
-        border-radius: 999px;
-        border: 1px solid var(--line);
-        background: rgba(24, 16, 40, 0.8);
-        color: var(--text);
+        gap: 0.4rem;
+        padding: 0.5rem 1rem;
+        border-radius: var(--radius-pill);
+        border: 1px solid transparent;
+        background: transparent;
+        color: var(--label-primary);
+        font-size: 0.8125rem;
+        font-weight: 600;
+        letter-spacing: -0.01em;
         cursor: pointer;
         transition:
-          border-color 0.2s,
-          box-shadow 0.2s,
-          background 0.2s;
+          background 0.2s var(--ease-out),
+          border-color 0.2s var(--ease-out),
+          transform 0.15s var(--ease-spring),
+          opacity 0.2s var(--ease-out);
       }
 
-      button:hover:not(:disabled) {
-        border-color: rgba(180, 140, 255, 0.35);
-        box-shadow: 0 0 16px var(--glow-violet);
-        background: rgba(36, 24, 56, 0.9);
+      .btn:hover:not(:disabled) {
+        background: rgba(255, 255, 255, 0.08);
       }
 
-      button:disabled {
-        opacity: 0.35;
+      .btn:active:not(:disabled) {
+        transform: scale(0.97);
+      }
+
+      .btn:disabled {
+        opacity: 0.32;
         cursor: not-allowed;
       }
 
-      button.active {
-        border-color: rgba(255, 126, 184, 0.5);
-        box-shadow: 0 0 18px var(--glow-pink);
-        color: #ffd8ec;
+      .btn-primary {
+        padding: 0.55rem 1.35rem;
+        background: var(--accent-blue);
+        color: #ffffff;
+        border-color: rgba(255, 255, 255, 0.12);
+        box-shadow: 0 4px 20px rgba(10, 132, 255, 0.35);
       }
 
-      #status {
-        margin-left: auto;
-        font-size: 0.78rem;
-        color: var(--muted);
-        letter-spacing: 0.04em;
+      .btn-primary:hover:not(:disabled) {
+        background: #2990ff;
+        box-shadow: 0 6px 24px rgba(10, 132, 255, 0.45);
+      }
+
+      .btn-ghost {
+        padding: 0.45rem 0.85rem;
+        font-size: 0.75rem;
+        color: var(--label-secondary);
+      }
+
+      .btn-record {
+        padding: 0.45rem 0.9rem;
+        font-size: 0.75rem;
+        color: var(--label-secondary);
+      }
+
+      .btn-record-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--label-tertiary);
+        transition:
+          background 0.2s var(--ease-out),
+          box-shadow 0.2s var(--ease-out);
+      }
+
+      .btn-record.active {
+        color: #ffb4b0;
+        background: rgba(255, 69, 58, 0.12);
+      }
+
+      .btn-record.active .btn-record-dot {
+        background: var(--accent-red);
+        box-shadow: 0 0 10px rgba(255, 69, 58, 0.65);
+        animation: record-pulse 1.4s ease-in-out infinite;
+      }
+
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.4rem 0.85rem;
+        border-radius: var(--radius-pill);
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid var(--hairline);
+        font-size: 0.75rem;
+        font-weight: 500;
+        color: var(--label-secondary);
+        transition:
+          border-color 0.3s var(--ease-out),
+          background 0.3s var(--ease-out);
+      }
+
+      .status-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+        background: var(--label-tertiary);
+        flex-shrink: 0;
+        transition:
+          background 0.3s var(--ease-out),
+          box-shadow 0.3s var(--ease-out);
+      }
+
+      .status-badge[data-state="ready"] .status-dot {
+        background: var(--label-tertiary);
+      }
+
+      .status-badge[data-state="active"] {
+        border-color: rgba(48, 209, 88, 0.25);
+        background: rgba(48, 209, 88, 0.08);
+        color: rgba(180, 255, 200, 0.9);
+      }
+
+      .status-badge[data-state="active"] .status-dot {
+        background: var(--accent-green);
+        box-shadow: 0 0 8px rgba(48, 209, 88, 0.55);
+      }
+
+      .status-badge[data-state="paused"] {
+        border-color: rgba(255, 159, 10, 0.25);
+        background: rgba(255, 159, 10, 0.08);
+        color: rgba(255, 210, 130, 0.95);
+      }
+
+      .status-badge[data-state="paused"] .status-dot {
+        background: var(--accent-orange);
+      }
+
+      .status-badge[data-state="recording"],
+      .status-badge[data-state="processing"] {
+        border-color: rgba(255, 69, 58, 0.28);
+        background: rgba(255, 69, 58, 0.1);
+        color: rgba(255, 180, 176, 0.95);
+      }
+
+      .status-badge[data-state="recording"] .status-dot,
+      .status-badge[data-state="processing"] .status-dot {
+        background: var(--accent-red);
+        animation: record-pulse 1.4s ease-in-out infinite;
+      }
+
+      .status-badge[data-state="stopped"] .status-dot {
+        background: var(--label-tertiary);
+      }
+
+      .status-badge[data-state="error"] {
+        border-color: rgba(255, 69, 58, 0.3);
+        color: rgba(255, 180, 176, 0.95);
+      }
+
+      .status-badge[data-state="error"] .status-dot {
+        background: var(--accent-red);
       }
 
       .stage {
-        position: sticky;
-        top: var(--toolbar-sticky-height);
-        z-index: 10;
+        flex: 1;
         display: flex;
+        align-items: center;
         justify-content: center;
-        width: 100%;
-        padding: 1.5rem 1rem 1rem;
+        padding: 2rem 1.5rem 2.5rem;
+        animation: rise-in 0.7s var(--ease-out) 0.08s both;
+      }
+
+      .stage-inner {
+        position: relative;
+        width: min(calc(100vw - 400px), 580px);
+        max-width: 100%;
+        isolation: isolate;
+      }
+
+      .stage-aura {
+        position: absolute;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .stage-aura--wide {
+        inset: -24%;
+        background: radial-gradient(
+          circle at 50% 50%,
+          rgba(191, 90, 242, 0.16) 0%,
+          rgba(10, 132, 255, 0.09) 38%,
+          rgba(255, 55, 95, 0.06) 56%,
+          transparent 72%
+        );
+        filter: blur(34px);
+        animation: aura-breathe 7s ease-in-out infinite;
+      }
+
+      .stage-aura--ring {
+        inset: -5%;
+        background: radial-gradient(
+          circle,
+          transparent 58%,
+          rgba(191, 90, 242, 0.22) 74%,
+          rgba(10, 132, 255, 0.14) 86%,
+          transparent 100%
+        );
+        filter: blur(10px);
+        animation: aura-breathe 5.5s ease-in-out infinite reverse;
       }
 
       .canvas-wrap {
         position: relative;
-        width: min(calc(100vw - 320px), 560px);
-        max-width: 100%;
+        z-index: 1;
+        width: 100%;
         aspect-ratio: 1;
         border-radius: 50%;
-        padding: 2px;
+        padding: 1px;
         background: linear-gradient(
-          135deg,
-          rgba(126, 184, 255, 0.15),
-          rgba(160, 120, 255, 0.08),
-          rgba(255, 126, 184, 0.12)
+          145deg,
+          rgba(255, 255, 255, 0.14),
+          rgba(255, 255, 255, 0.03) 40%,
+          rgba(255, 255, 255, 0.08)
         );
         box-shadow:
-          0 0 40px rgba(100, 60, 160, 0.15),
-          0 0 80px rgba(60, 40, 100, 0.1);
+          0 0 0 1px rgba(255, 255, 255, 0.07),
+          0 0 28px rgba(191, 90, 242, 0.18),
+          0 0 56px rgba(10, 132, 255, 0.12),
+          0 0 88px rgba(255, 55, 95, 0.08);
+        animation: ring-glow 8s ease-in-out infinite;
+      }
+
+      .canvas-wrap::after {
+        content: "";
+        position: absolute;
+        inset: -3px;
+        border-radius: 50%;
+        background: conic-gradient(
+          from 0deg,
+          transparent 0deg,
+          rgba(10, 132, 255, 0.55) 70deg,
+          rgba(191, 90, 242, 0.45) 140deg,
+          rgba(255, 75, 120, 0.5) 210deg,
+          rgba(191, 90, 242, 0.4) 280deg,
+          rgba(10, 132, 255, 0.5) 330deg,
+          transparent 360deg
+        );
+        opacity: 0.42;
+        animation: mystic-shimmer 22s linear infinite;
+        -webkit-mask: radial-gradient(
+          circle,
+          transparent calc(100% - 3px),
+          #000 calc(100% - 1.5px)
+        );
+        mask: radial-gradient(circle, transparent calc(100% - 3px), #000 calc(100% - 1.5px));
+        pointer-events: none;
+      }
+
+      .canvas-wrap::before {
+        content: "";
+        position: absolute;
+        inset: 8%;
+        border-radius: 50%;
+        border: 1px solid rgba(255, 255, 255, 0.04);
+        pointer-events: none;
       }
 
       #simCanvas {
@@ -253,64 +787,115 @@
         height: 100%;
         display: block;
         border-radius: 50%;
-        background: radial-gradient(circle at 50% 45%, #120c1e 0%, #06040c 70%);
+        background: radial-gradient(circle at 50% 42%, #141416 0%, #000000 72%);
       }
 
-      #downloads {
-        width: 100%;
-        text-align: center;
-        padding: 0 1rem 0.75rem;
+      @keyframes aura-breathe {
+        0%,
+        100% {
+          opacity: 0.72;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 1;
+          transform: scale(1.04);
+        }
       }
 
-      #downloads a {
-        color: var(--blue);
-        font-size: 0.8rem;
-        margin: 0 0.5rem;
-        text-decoration: none;
-        text-shadow: 0 0 12px var(--glow-blue);
+      @keyframes ring-glow {
+        0%,
+        100% {
+          box-shadow:
+            0 0 0 1px rgba(255, 255, 255, 0.07),
+            0 0 28px rgba(191, 90, 242, 0.16),
+            0 0 56px rgba(10, 132, 255, 0.1),
+            0 0 88px rgba(255, 55, 95, 0.07);
+        }
+        50% {
+          box-shadow:
+            0 0 0 1px rgba(255, 255, 255, 0.09),
+            0 0 36px rgba(191, 90, 242, 0.24),
+            0 0 68px rgba(10, 132, 255, 0.16),
+            0 0 104px rgba(255, 55, 95, 0.11);
+        }
       }
 
-      #downloads a:hover {
-        text-decoration: underline;
+      @keyframes mystic-shimmer {
+        to {
+          transform: rotate(360deg);
+        }
       }
 
-      @media (max-width: 860px) {
+      @keyframes rise-in {
+        from {
+          opacity: 0;
+          transform: translateY(14px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @keyframes record-pulse {
+        0%,
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.55;
+          transform: scale(0.88);
+        }
+      }
+
+      @media (max-width: 900px) {
         .app {
-          grid-template-columns: 1fr;
+          display: flex;
+          flex-direction: column;
         }
 
-        .sidebar,
         .main {
-          grid-column: 1;
+          order: 1;
         }
 
         .sidebar {
+          order: 2;
+          position: static;
+          max-height: none;
           border-right: none;
-          border-bottom: 1px solid var(--line);
-          padding: 1.25rem 1.25rem 2rem;
+          border-top: 1px solid var(--hairline);
         }
 
-        .canvas-wrap {
+        .stage-inner {
           width: min(92vw, 480px);
         }
 
-        .app {
-          --toolbar-sticky-height: 6.75rem;
+        .transport {
+          justify-content: center;
         }
 
-        .sidebar h1 {
-          font-size: 1.2rem;
-        }
-
-        #status {
-          margin-left: 0;
+        .status-badge {
           width: 100%;
-          text-align: center;
+          justify-content: center;
           order: 10;
         }
+      }
 
-        .toolbar {
-          justify-content: center;
+      @media (prefers-reduced-motion: reduce) {
+        .stage-aura--wide,
+        .stage-aura--ring,
+        .canvas-wrap,
+        .canvas-wrap::after {
+          animation: none !important;
+        }
+
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
         }
       }
     </style>
@@ -319,86 +904,378 @@
   <body>
     <div class="app">
       <aside class="sidebar">
-        <h1>Doppelpendel</h1>
-        <p>
-          Zwei gekoppelte Pendel in der Schwerkraft – berechnet nach den Lagrange-Gleichungen.
-          Chaotisch: winzige Unterschiede, völlig andere Bahnen.
-        </p>
-
-        <div class="block">
-          <h2>Bild</h2>
-          <p>
-            Die weiße Linie ist die Referenz. Die rosa Masse hinterlässt eine
-            Regenbogen-Spur entlang ihrer chaotischen Bahn.
-          </p>
-          <div class="legend" style="margin-top: 0.65rem">
-            <span><i class="dot blue"></i> Helle Melodie</span>
-            <span><i class="dot pink"></i> Warme Melodie</span>
+        <header class="brand">
+          <div class="brand-mark">
+            <div class="brand-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+                <circle cx="12" cy="4" r="1.5" fill="currentColor" stroke="none" />
+                <path d="M12 4 L12 10" stroke-linecap="round" />
+                <circle cx="12" cy="10" r="1.2" fill="currentColor" stroke="none" />
+                <path d="M12 10 L17 18" stroke-linecap="round" />
+                <circle cx="17" cy="18" r="1.8" fill="currentColor" stroke="none" opacity="0.85" />
+              </svg>
+            </div>
+            <h1>Doppelpendel</h1>
           </div>
-        </div>
+          <p class="brand-tagline">
+            Chaotische Bahnen aus winzigen Unterschieden — Physik, Klang und Bewegung in Echtzeit.
+          </p>
+        </header>
 
-        <div class="block">
-          <h2>Winkelmaß</h2>
-          <p>
-            Der Kreis ist in Grad eingeteilt (Striche alle <strong>15°</strong>, Zahlen alle
-            <strong>30°</strong>) und liegt auf der größtmöglichen Bahn der rosa Masse. Winkel vom
-            Pendelpunkt aus:
-          </p>
-          <p style="margin-top: 0.5rem">
-            <strong>0°</strong> = nach unten (Schwerkraft),
-            <strong>90°</strong> = nach rechts (weiße Referenzlinie von der Mitte nach rechts),
-            <strong>180°</strong> = nach oben,
-            <strong>270°</strong> = nach links.
-            Der blaue Arm folgt diesem Winkel θ₁; die rosa Masse hat einen eigenen Winkel θ₂.
-          </p>
-        </div>
+        <nav class="controls" aria-label="Steuerung">
+          <details class="section" open>
+            <summary class="section-head">
+              <span class="section-title-wrap">
+                <span class="section-glyph" aria-hidden="true">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+                    <circle cx="8" cy="8" r="5.5" />
+                    <path d="M11 5 L13 3" stroke-linecap="round" />
+                  </svg>
+                </span>
+                <span class="section-title">Flugkugel</span>
+              </span>
+              <svg class="section-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
+                <path d="M4 6 L8 10 L12 6" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </summary>
+            <div class="section-body">
+              <div class="fader-bank">
+                <div class="fader speed">
+                  <div class="fader-head">
+                    <label for="ballSpeed">Geschwindigkeit</label>
+                    <span class="fader-readout" id="ballSpeedValue">155</span>
+                  </div>
+                  <div class="fader-track-wrap">
+                    <input
+                      id="ballSpeed"
+                      class="fader-input"
+                      type="range"
+                      min="40"
+                      max="320"
+                      value="155"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </details>
 
-        <div class="block click-note">
-          <h2>Click (nur blau)</h2>
-          <p>
-            Zusätzlich zur Melodie, wenn Linienschnitt <strong>und</strong> Richtungswechsel von
-            ω₁ innerhalb von ca. 0,25&nbsp;s zusammenfallen.
-          </p>
-        </div>
+          <details class="section" id="mixer" open>
+            <summary class="section-head">
+              <span class="section-title-wrap">
+                <span class="section-glyph" aria-hidden="true">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+                    <path d="M2 12 L6 8 L9 11 L14 5" stroke-linecap="round" stroke-linejoin="round" />
+                  </svg>
+                </span>
+                <span class="section-title">Mixer</span>
+              </span>
+              <svg class="section-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
+                <path d="M4 6 L8 10 L12 6" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </summary>
+            <div class="section-body">
+              <p class="mixer-sub">Pendel</p>
+              <div class="fader-bank">
+                <div class="fader blue">
+                  <div class="fader-head">
+                    <label for="mixMelodyBlue">Melodie blau</label>
+                    <span class="fader-readout" data-mixer-value="melodyBlue">70</span>
+                  </div>
+                  <div class="fader-track-wrap">
+                    <input
+                      id="mixMelodyBlue"
+                      class="fader-input"
+                      type="range"
+                      min="0"
+                      max="100"
+                      value="70"
+                      data-mixer="melodyBlue"
+                    />
+                  </div>
+                </div>
+                <div class="fader pink">
+                  <div class="fader-head">
+                    <label for="mixMelodyPink">Melodie rosa</label>
+                    <span class="fader-readout" data-mixer-value="melodyPink">70</span>
+                  </div>
+                  <div class="fader-track-wrap">
+                    <input
+                      id="mixMelodyPink"
+                      class="fader-input"
+                      type="range"
+                      min="0"
+                      max="100"
+                      value="70"
+                      data-mixer="melodyPink"
+                    />
+                  </div>
+                </div>
+                <div class="fader blue">
+                  <div class="fader-head">
+                    <label for="mixClick">Click</label>
+                    <span class="fader-readout" data-mixer-value="click">80</span>
+                  </div>
+                  <div class="fader-track-wrap">
+                    <input
+                      id="mixClick"
+                      class="fader-input"
+                      type="range"
+                      min="0"
+                      max="100"
+                      value="80"
+                      data-mixer="click"
+                    />
+                  </div>
+                </div>
+              </div>
+              <p class="mixer-sub">Flugkugel</p>
+              <div class="fader-bank">
+                <div class="fader">
+                  <div class="fader-head">
+                    <label for="mixKick">Kick</label>
+                    <span class="fader-readout" data-mixer-value="kick">85</span>
+                  </div>
+                  <div class="fader-track-wrap">
+                    <input
+                      id="mixKick"
+                      class="fader-input"
+                      type="range"
+                      min="0"
+                      max="100"
+                      value="85"
+                      data-mixer="kick"
+                    />
+                  </div>
+                </div>
+                <div class="fader">
+                  <div class="fader-head">
+                    <label for="mixSnare">Snare</label>
+                    <span class="fader-readout" data-mixer-value="snare">70</span>
+                  </div>
+                  <div class="fader-track-wrap">
+                    <input
+                      id="mixSnare"
+                      class="fader-input"
+                      type="range"
+                      min="0"
+                      max="100"
+                      value="70"
+                      data-mixer="snare"
+                    />
+                  </div>
+                </div>
+                <div class="fader">
+                  <div class="fader-head">
+                    <label for="mixHiHat">Hi-Hat</label>
+                    <span class="fader-readout" data-mixer-value="hiHat">70</span>
+                  </div>
+                  <div class="fader-track-wrap">
+                    <input
+                      id="mixHiHat"
+                      class="fader-input"
+                      type="range"
+                      min="0"
+                      max="100"
+                      value="70"
+                      data-mixer="hiHat"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </details>
 
-        <div class="block">
-          <h2>Klang</h2>
-          <p>
-            Beim Überqueren der Linie: Pentatonik mit wechselnder Höhe, Lautstärke und Länge –
-            blau hell, rosa warm.
-          </p>
-        </div>
+          <details class="section" id="effects">
+            <summary class="section-head">
+              <span class="section-title-wrap">
+                <span class="section-glyph" aria-hidden="true">
+                  <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+                    <circle cx="8" cy="8" r="2" />
+                    <path d="M8 2 L8 4 M8 12 L8 14 M2 8 L4 8 M12 8 L14 8" stroke-linecap="round" />
+                  </svg>
+                </span>
+                <span class="section-title">Effekte</span>
+              </span>
+              <svg class="section-chevron" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.6">
+                <path d="M4 6 L8 10 L12 6" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </summary>
+            <div class="section-body">
+              <div class="fader-bank">
+                <div class="fader">
+                  <div class="fader-head">
+                    <label for="effectReverb">Reverb gesamt</label>
+                    <span class="fader-readout" data-effect-value="reverb">0</span>
+                  </div>
+                  <div class="fader-track-wrap">
+                    <input
+                      id="effectReverb"
+                      class="fader-input"
+                      type="range"
+                      min="0"
+                      max="100"
+                      value="0"
+                      data-effect="reverb"
+                    />
+                  </div>
+                </div>
+              </div>
+              <p class="mixer-sub">Delay</p>
+              <div class="fader-bank">
+                <div class="fader blue">
+                  <div class="fader-head">
+                    <label for="delayMelodyBlue">Melodie blau</label>
+                    <span class="fader-readout" data-delay-value="melodyBlue">0</span>
+                  </div>
+                  <div class="fader-track-wrap">
+                    <input
+                      id="delayMelodyBlue"
+                      class="fader-input"
+                      type="range"
+                      min="0"
+                      max="100"
+                      value="0"
+                      data-delay="melodyBlue"
+                    />
+                  </div>
+                </div>
+                <div class="fader pink">
+                  <div class="fader-head">
+                    <label for="delayMelodyPink">Melodie rosa</label>
+                    <span class="fader-readout" data-delay-value="melodyPink">0</span>
+                  </div>
+                  <div class="fader-track-wrap">
+                    <input
+                      id="delayMelodyPink"
+                      class="fader-input"
+                      type="range"
+                      min="0"
+                      max="100"
+                      value="0"
+                      data-delay="melodyPink"
+                    />
+                  </div>
+                </div>
+                <div class="fader blue">
+                  <div class="fader-head">
+                    <label for="delayClick">Click</label>
+                    <span class="fader-readout" data-delay-value="click">0</span>
+                  </div>
+                  <div class="fader-track-wrap">
+                    <input
+                      id="delayClick"
+                      class="fader-input"
+                      type="range"
+                      min="0"
+                      max="100"
+                      value="0"
+                      data-delay="click"
+                    />
+                  </div>
+                </div>
+                <div class="fader">
+                  <div class="fader-head">
+                    <label for="delayKick">Kick</label>
+                    <span class="fader-readout" data-delay-value="kick">0</span>
+                  </div>
+                  <div class="fader-track-wrap">
+                    <input
+                      id="delayKick"
+                      class="fader-input"
+                      type="range"
+                      min="0"
+                      max="100"
+                      value="0"
+                      data-delay="kick"
+                    />
+                  </div>
+                </div>
+                <div class="fader">
+                  <div class="fader-head">
+                    <label for="delaySnare">Snare</label>
+                    <span class="fader-readout" data-delay-value="snare">0</span>
+                  </div>
+                  <div class="fader-track-wrap">
+                    <input
+                      id="delaySnare"
+                      class="fader-input"
+                      type="range"
+                      min="0"
+                      max="100"
+                      value="0"
+                      data-delay="snare"
+                    />
+                  </div>
+                </div>
+                <div class="fader">
+                  <div class="fader-head">
+                    <label for="delayHiHat">Hi-Hat</label>
+                    <span class="fader-readout" data-delay-value="hiHat">0</span>
+                  </div>
+                  <div class="fader-track-wrap">
+                    <input
+                      id="delayHiHat"
+                      class="fader-input"
+                      type="range"
+                      min="0"
+                      max="100"
+                      value="0"
+                      data-delay="hiHat"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </details>
 
-        <div class="block block-record">
-          <h2>Aufnahme</h2>
-          <p>
-            Mit <strong>Aufnahme</strong> wird das komplette Klangerlebnis (Melodien, Clicks) live
-            mitgeschnitten. Erneut klicken (<strong>Aufnahme ●</strong>) beendet die Aufnahme –
-            danach erscheinen Links zum Download als <strong>.webm</strong> oder
-            <strong>.wav</strong> unter dem Pendel.
-          </p>
-        </div>
+          <div class="section section-static section-record">
+            <div class="section-title-wrap">
+              <span class="section-glyph" aria-hidden="true">
+                <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.4">
+                  <circle cx="8" cy="8" r="5.5" />
+                  <circle cx="8" cy="8" r="2" fill="currentColor" stroke="none" />
+                </svg>
+              </span>
+              <span class="section-title">Aufnahmen</span>
+            </div>
+            <p class="record-hint">Nach einer Aufnahme erscheinen hier die Download-Links.</p>
+            <div id="downloads"></div>
+          </div>
+        </nav>
       </aside>
 
       <main class="main">
-        <div class="toolbar">
-          <button id="startButton">Start</button>
-          <button id="pauseButton" disabled>Pause</button>
-          <button id="stopButton" disabled>Stop</button>
-          <button id="recordButton" disabled>Aufnahme</button>
-          <span id="status">Bereit</span>
-        </div>
+        <header class="transport">
+          <div class="transport-primary">
+            <button id="startButton" class="btn btn-primary" type="button">Start</button>
+            <div class="transport-secondary">
+              <button id="pauseButton" class="btn btn-ghost" type="button" disabled>Pause</button>
+              <button id="stopButton" class="btn btn-ghost" type="button" disabled>Stop</button>
+              <button id="recordButton" class="btn btn-record" type="button" disabled>
+                <span class="btn-record-dot" aria-hidden="true"></span>
+                Aufnahme
+              </button>
+            </div>
+          </div>
+          <div class="status-badge" id="statusBadge" data-state="ready" role="status" aria-live="polite">
+            <span class="status-dot" aria-hidden="true"></span>
+            <span id="status">Bereit</span>
+          </div>
+        </header>
 
         <div class="stage">
-          <div class="canvas-wrap">
-            <canvas id="simCanvas"></canvas>
+          <div class="stage-inner">
+            <div class="stage-aura stage-aura--wide" aria-hidden="true"></div>
+            <div class="stage-aura stage-aura--ring" aria-hidden="true"></div>
+            <div class="canvas-wrap">
+              <canvas id="simCanvas" aria-label="Doppelpendel-Simulation"></canvas>
+            </div>
           </div>
         </div>
-
-        <div id="downloads"></div>
       </main>
     </div>
 
-    <script type="module" src="./dist/main.js?v=sticky"></script>
+    <script type="module" src="./dist/main.js?v=fix-trail-3"></script>
   </body>
 </html>

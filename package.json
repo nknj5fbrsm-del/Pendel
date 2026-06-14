@@ -4,7 +4,8 @@
   "version": "1.0.0",
   "scripts": {
     "build": "tsc",
-    "dev": "python3 -m http.server 5173"
+    "dev": "python3 -m http.server 5180",
+    "start": "npm run build && npm run dev"
   },
   "devDependencies": {
     "typescript": "latest"
