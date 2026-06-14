@@ -1041,6 +1041,19 @@ const INITIAL_STATE = {
     omega1: 0,
     omega2: 0,
 };
+function syncMobileTransportInset() {
+    const transport = document.querySelector(".transport");
+    const main = document.querySelector(".main");
+    if (!transport || !main)
+        return;
+    const mobile = window.matchMedia("(max-width: 900px)").matches;
+    if (mobile) {
+        main.style.paddingTop = `${transport.offsetHeight}px`;
+    }
+    else {
+        main.style.paddingTop = "";
+    }
+}
 function bootstrap() {
     const canvas = document.getElementById("simCanvas");
     const startButton = document.getElementById("startButton");
@@ -1073,7 +1086,12 @@ function bootstrap() {
     const renderer = new Renderer(canvas);
     renderer.resize();
     renderer.resetVisuals();
-    window.addEventListener("resize", () => renderer.resize());
+    window.addEventListener("resize", () => {
+        renderer.resize();
+        syncMobileTransportInset();
+    });
+    syncMobileTransportInset();
+    window.addEventListener("load", syncMobileTransportInset);
     document.addEventListener("visibilitychange", () => {
         if (document.visibilityState === "visible" && running && !paused) {
             primeAudioContextSync();

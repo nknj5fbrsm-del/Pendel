@@ -1317,6 +1317,19 @@ const INITIAL_STATE: PendulumState = {
   omega2: 0,
 };
 
+function syncMobileTransportInset(): void {
+  const transport = document.querySelector(".transport") as HTMLElement | null;
+  const main = document.querySelector(".main") as HTMLElement | null;
+  if (!transport || !main) return;
+
+  const mobile = window.matchMedia("(max-width: 900px)").matches;
+  if (mobile) {
+    main.style.paddingTop = `${transport.offsetHeight}px`;
+  } else {
+    main.style.paddingTop = "";
+  }
+}
+
 function bootstrap(): void {
   const canvas = document.getElementById("simCanvas") as HTMLCanvasElement;
   const startButton = document.getElementById("startButton") as HTMLButtonElement;
@@ -1354,7 +1367,12 @@ function bootstrap(): void {
   const renderer = new Renderer(canvas);
   renderer.resize();
   renderer.resetVisuals();
-  window.addEventListener("resize", () => renderer.resize());
+  window.addEventListener("resize", () => {
+    renderer.resize();
+    syncMobileTransportInset();
+  });
+  syncMobileTransportInset();
+  window.addEventListener("load", syncMobileTransportInset);
 
   document.addEventListener("visibilitychange", () => {
     if (document.visibilityState === "visible" && running && !paused) {
