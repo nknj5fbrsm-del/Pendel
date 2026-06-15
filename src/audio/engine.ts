@@ -1,41 +1,68 @@
-import { createSoundBank } from "./factory.js";
+import { createAudioBundle } from "./bundle/factory.js";
+import {
+  type AudioBundle,
+  type AudioBundleId,
+  type UiPresetTarget,
+  isClassicBundle,
+  parseAudioBundleId,
+} from "./bundle/types.js";
+import { DynamicsEventTracker, type ExtendedDynamicsEvents } from "./physics-events.js";
+import type { SimulationSnapshot } from "./simulation-snapshot.js";
 import { AudioMixer } from "./mixer.js";
-import type {
-  BallCollisionEvents,
-  DynamicsEvents,
-  MixerChannelId,
-  SoundBank,
-  SoundBankId,
-} from "./types.js";
+import type { BallCollisionEvents, MixerChannelId, SoundBankId } from "./types.js";
+
+export { parseAudioBundleId };
+export type { AudioBundleId, ExtendedDynamicsEvents, SimulationSnapshot };
+export {
+  AUDIO_BUNDLE_DESCRIPTIONS,
+  AUDIO_BUNDLE_LABELS,
+  AUDIO_BUNDLE_ORDER,
+  AUDIO_BUNDLE_STORAGE_KEY,
+} from "./bundle/types.js";
 
 export class AudioEngine {
   private readonly mixer = new AudioMixer();
-  private bank: SoundBank;
-  private lastMelodyBob1Time = 0;
-  private lastMelodyBob2Time = 0;
-  private lastClickBob1 = 0;
-  private bob1CrossAt = -1;
-  private bob1FlipAt = -1;
-  private bob2CrossAt = -1;
-  private bob2FlipAt = -1;
-  private readonly clickCooldown = 0.04;
-  private readonly melodyCooldown = 0.14;
-  private readonly pairWindow = 0.25;
+  private bundle: AudioBundle;
+  private readonly dynamicsTracker = new DynamicsEventTracker();
+  private readonly uiTarget: UiPresetTarget;
 
-  constructor(bankId: SoundBankId = "original") {
-    this.bank = createSoundBank(bankId, this.mixer);
-    this.bank.applyMixerPresets?.(this.mixer);
+  constructor(
+    bundleId: AudioBundleId = "classic",
+    soundBankId: SoundBankId = "original",
+    uiTarget?: UiPresetTarget,
+  ) {
+    this.uiTarget = uiTarget ?? {
+      setMixerLevel: (channel, level) => this.setMixerLevel(channel, level),
+      setReverbWet: (level) => this.setReverbWet(level),
+    };
+    this.bundle = createAudioBundle(bundleId, this.mixer, { soundBankId });
+    this.applyBundlePresets();
   }
 
-  getSoundBankId(): SoundBankId {
-    return this.bank.id;
+  getBundleId(): AudioBundleId {
+    return this.bundle.id;
+  }
+
+  getSoundBankId(): SoundBankId | null {
+    return isClassicBundle(this.bundle) ? this.bundle.getSoundBankId() : null;
+  }
+
+  setBundle(id: AudioBundleId, soundBankId?: SoundBankId): void {
+    if (id === this.bundle.id && id === "classic" && soundBankId === undefined) return;
+    if (id === this.bundle.id && id !== "classic") return;
+
+    this.bundle.dispose();
+    const options =
+      id === "classic" ? { soundBankId: soundBankId ?? this.getSoundBankId() ?? "original" } : {};
+    this.bundle = createAudioBundle(id, this.mixer, options);
+    this.dynamicsTracker.reset();
+    this.applyBundlePresets();
+    this.resetTriggers();
   }
 
   setSoundBank(id: SoundBankId): void {
-    if (id === this.bank.id) return;
-    this.bank.dispose();
-    this.bank = createSoundBank(id, this.mixer);
-    this.bank.applyMixerPresets?.(this.mixer);
+    if (!isClassicBundle(this.bundle)) return;
+    this.bundle.setSoundBank(id);
     this.resetTriggers();
   }
 
@@ -52,59 +79,45 @@ export class AudioEngine {
   }
 
   resetTriggers(): void {
-    this.bob1CrossAt = -1;
-    this.bob1FlipAt = -1;
-    this.bob2CrossAt = -1;
-    this.bob2FlipAt = -1;
-    this.lastClickBob1 = 0;
-    this.lastMelodyBob1Time = 0;
-    this.lastMelodyBob2Time = 0;
-    this.bank.pendulum.reset();
+    this.dynamicsTracker.reset();
+    this.bundle.reset();
   }
 
-  onDynamics(now: number, events: DynamicsEvents): { bob1: boolean; bob2: boolean } {
-    const flash = { bob1: false, bob2: false };
-
-    if (events.bob1Cross) this.bob1CrossAt = now;
-    if (events.omega1Flip) this.bob1FlipAt = now;
-    if (events.bob2Cross) this.bob2CrossAt = now;
-    if (events.omega2Flip) this.bob2FlipAt = now;
-
-    if (events.bob1Cross && now - this.lastMelodyBob1Time > this.melodyCooldown) {
-      this.bank.pendulum.playMelodyBlue(now);
-      this.lastMelodyBob1Time = now;
-      flash.bob1 = true;
-    }
-
-    if (
-      this.pairedWithinWindow(this.bob1CrossAt, this.bob1FlipAt, now) &&
-      now - this.lastClickBob1 > this.clickCooldown
-    ) {
-      this.bank.pendulum.playClick(now);
-      this.lastClickBob1 = now;
-      this.bob1CrossAt = -1;
-      this.bob1FlipAt = -1;
-      flash.bob1 = true;
-    }
-
-    if (events.bob2Cross && now - this.lastMelodyBob2Time > this.melodyCooldown) {
-      this.bank.pendulum.playMelodyPink(now);
-      this.lastMelodyBob2Time = now;
-      flash.bob2 = true;
-    }
-
-    return flash;
+  detectDynamics(
+    now: number,
+    prevState: { omega1: number; omega2: number; theta2: number },
+    stepState: { omega1: number; omega2: number; theta2: number },
+    prevGeom: { x1: number; y1: number; x2: number; y2: number },
+    nextGeom: { x1: number; y1: number; x2: number; y2: number },
+    kineticEnergy: number,
+  ): ExtendedDynamicsEvents {
+    return this.dynamicsTracker.detect(
+      now,
+      prevState,
+      stepState,
+      prevGeom,
+      nextGeom,
+      kineticEnergy,
+    );
   }
 
-  onBallCollisions(now: number, events: BallCollisionEvents): void {
-    if (events.wallHit) this.bank.ball.playKick(now);
-    if (events.bobHit) this.bank.ball.playSnare(now);
-    if (events.lineCross) this.bank.ball.playHiHat(now);
+  onDynamics(
+    now: number,
+    events: ExtendedDynamicsEvents,
+    snap: SimulationSnapshot,
+  ): { bob1: boolean; bob2: boolean } {
+    return this.bundle.onDynamics(now, events, snap);
   }
 
-  private pairedWithinWindow(crossAt: number, flipAt: number, now: number): boolean {
-    if (crossAt < 0 || flipAt < 0) return false;
-    if (now - crossAt > this.pairWindow || now - flipAt > this.pairWindow) return false;
-    return Math.abs(crossAt - flipAt) <= this.pairWindow;
+  onBallCollisions(now: number, events: BallCollisionEvents, snap: SimulationSnapshot): void {
+    this.bundle.onBallCollisions(now, events, snap);
+  }
+
+  onFrame(now: number, snap: SimulationSnapshot): void {
+    this.bundle.onFrame?.(now, snap);
+  }
+
+  private applyBundlePresets(): void {
+    this.bundle.applyUiPresets?.(this.uiTarget);
   }
 }

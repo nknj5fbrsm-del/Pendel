@@ -1,3 +1,4 @@
+import { AUDIO_BUNDLE_DESCRIPTIONS, AUDIO_BUNDLE_LABELS, AUDIO_BUNDLE_ORDER } from "./bundle/types.js";
 import { SOUND_BANK_LABELS, SOUND_BANK_ORDER } from "./types.js";
 export function updateFaderVisual(input, readout, text) {
     const min = Number(input.min);
@@ -79,4 +80,50 @@ export class SoundBankController {
             container.appendChild(button);
         }
     }
+}
+function syncFaderInput(input, percent) {
+    if (!input)
+        return;
+    input.value = String(percent);
+    updateFaderVisual(input, faderReadout(input), String(percent));
+}
+export class BundleController {
+    constructor(onSelect, bundleRoot, descriptionEl, initialId) {
+        this.onSelect = onSelect;
+        this.bundleRoot = bundleRoot;
+        this.updateDescription(descriptionEl, initialId);
+        this.bundleRoot.querySelectorAll("[data-audio-bundle]").forEach((button) => {
+            const id = button.dataset.audioBundle;
+            button.textContent = AUDIO_BUNDLE_LABELS[id] ?? id;
+            button.classList.toggle("active", id === initialId);
+            button.addEventListener("click", () => {
+                this.bundleRoot.querySelectorAll("[data-audio-bundle]").forEach((b) => {
+                    b.classList.toggle("active", b === button);
+                });
+                this.updateDescription(descriptionEl, id);
+                this.onSelect(id);
+            });
+        });
+    }
+    static renderButtons(container) {
+        container.innerHTML = "";
+        for (const id of AUDIO_BUNDLE_ORDER) {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "bank-chip";
+            button.dataset.audioBundle = id;
+            button.textContent = AUDIO_BUNDLE_LABELS[id];
+            container.appendChild(button);
+        }
+    }
+    updateDescription(el, id) {
+        if (el)
+            el.textContent = AUDIO_BUNDLE_DESCRIPTIONS[id] ?? "";
+    }
+}
+export function syncMixerFaderDom(root, channel, level) {
+    syncFaderInput(root.querySelector(`[data-mixer="${channel}"]`), Math.round(level * 100));
+}
+export function syncReverbFaderDom(root, level) {
+    syncFaderInput(root.querySelector('[data-effect="reverb"]'), Math.round(level * 100));
 }

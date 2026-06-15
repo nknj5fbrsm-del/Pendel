@@ -1,5 +1,6 @@
-import { AudioEngine } from "./audio/engine.js";
-import { EffectsController, faderReadout, MixerController, SoundBankController, updateFaderVisual, } from "./audio/ui-controls.js";
+import { AudioEngine, AUDIO_BUNDLE_STORAGE_KEY, parseAudioBundleId, } from "./audio/engine.js";
+import { createSnapshot } from "./audio/simulation-snapshot.js";
+import { BundleController, EffectsController, faderReadout, MixerController, SoundBankController, syncMixerFaderDom, syncReverbFaderDom, updateFaderVisual, } from "./audio/ui-controls.js";
 import { parseSoundBankId, SOUND_BANK_STORAGE_KEY } from "./audio/types.js";
 class DoublePendulumSimulation {
     constructor(params, initial) {
@@ -88,6 +89,9 @@ class FlyingBallSimulation {
     }
     getState() {
         return { x: this.x, y: this.y };
+    }
+    getSpeed() {
+        return Math.hypot(this.vx, this.vy);
     }
     setSpeed(speed) {
         this.speed = Math.max(40, Math.min(320, speed));
@@ -684,15 +688,45 @@ function bootstrap() {
     let audioEngine = null;
     let recorder = null;
     let audioBootstrapping = false;
+    const savedBundle = parseAudioBundleId(localStorage.getItem(AUDIO_BUNDLE_STORAGE_KEY));
     const savedSoundBank = parseSoundBankId(localStorage.getItem(SOUND_BANK_STORAGE_KEY));
+    let selectedBundle = savedBundle;
+    let selectedSoundBank = savedSoundBank;
+    const mixerEl = document.getElementById("mixer");
+    const effectsEl = document.getElementById("effects");
+    const soundBankSection = document.getElementById("soundBankSection");
+    const syncSoundBankVisibility = (bundleId) => {
+        soundBankSection.hidden = bundleId !== "classic";
+    };
+    syncSoundBankVisibility(savedBundle);
+    const audioUiTarget = {
+        setMixerLevel: (channel, level) => {
+            audioEngine?.setMixerLevel(channel, level);
+            syncMixerFaderDom(mixerEl, channel, level);
+        },
+        setReverbWet: (level) => {
+            audioEngine?.setReverbWet(level);
+            syncReverbFaderDom(effectsEl, level);
+        },
+    };
+    const audioBundlesEl = document.getElementById("audioBundles");
+    const bundleDescriptionEl = document.getElementById("bundleDescription");
+    BundleController.renderButtons(audioBundlesEl);
+    new BundleController((id) => {
+        selectedBundle = id;
+        audioEngine?.setBundle(id);
+        localStorage.setItem(AUDIO_BUNDLE_STORAGE_KEY, id);
+        syncSoundBankVisibility(id);
+    }, audioBundlesEl, bundleDescriptionEl, savedBundle);
     const soundBanksEl = document.getElementById("soundBanks");
     SoundBankController.renderButtons(soundBanksEl);
     new SoundBankController((id) => {
+        selectedSoundBank = id;
         audioEngine?.setSoundBank(id);
         localStorage.setItem(SOUND_BANK_STORAGE_KEY, id);
     }, soundBanksEl, savedSoundBank);
-    new MixerController((channel, level) => audioEngine?.setMixerLevel(channel, level), document.getElementById("mixer"));
-    new EffectsController((level) => audioEngine?.setReverbWet(level), (channel, level) => audioEngine?.setDelayWet(channel, level), document.getElementById("effects"));
+    new MixerController((channel, level) => audioEngine?.setMixerLevel(channel, level), mixerEl);
+    new EffectsController((level) => audioEngine?.setReverbWet(level), (channel, level) => audioEngine?.setDelayWet(channel, level), effectsEl);
     let started = false;
     let running = false;
     let paused = false;
@@ -755,13 +789,13 @@ function bootstrap() {
                 const prevGeom = getPendulumGeometry(previousState, params);
                 const stepState = simulation.step(dt / subSteps);
                 const nextGeom = getPendulumGeometry(stepState, params);
-                const events = {
-                    bob1Cross: didCrossLine(prevGeom.y1, nextGeom.y1),
-                    bob2Cross: didCrossLine(prevGeom.y2, nextGeom.y2),
-                    omega1Flip: didOmegaFlip(previousState.omega1, stepState.omega1),
-                    omega2Flip: didOmegaFlip(previousState.omega2, stepState.omega2),
-                };
-                const flash = audioEngine?.onDynamics(Tone.now(), events);
+                const subSnap = createSnapshot(stepState, simulation.kineticEnergy(), {
+                    x: flyingBall.getState().x,
+                    y: flyingBall.getState().y,
+                    speed: flyingBall.getSpeed(),
+                }, still, dt / subSteps);
+                const events = audioEngine?.detectDynamics(Tone.now(), previousState, stepState, prevGeom, nextGeom, simulation.kineticEnergy());
+                const flash = events ? audioEngine?.onDynamics(Tone.now(), events, subSnap) : undefined;
                 if (flash)
                     renderer.applySoundFlash(flash);
                 previousState = stepState;
@@ -770,7 +804,13 @@ function bootstrap() {
             const bob1 = { x: latestGeom.x1 * scale, y: latestGeom.y1 * scale, r: BOB1_DISPLAY_RADIUS };
             const bob2 = { x: latestGeom.x2 * scale, y: latestGeom.y2 * scale, r: BOB2_DISPLAY_RADIUS };
             const ballEvents = flyingBall.step(dt, Tone.now(), boundaryRadius, bob1, bob2);
-            audioEngine?.onBallCollisions(Tone.now(), ballEvents);
+            const frameSnap = createSnapshot(simulation.getState(), simulation.kineticEnergy(), {
+                x: flyingBall.getState().x,
+                y: flyingBall.getState().y,
+                speed: flyingBall.getSpeed(),
+            }, still, dt);
+            audioEngine?.onBallCollisions(Tone.now(), ballEvents, frameSnap);
+            audioEngine?.onFrame(Tone.now(), frameSnap);
             ballState = flyingBall.getState();
             renderer.draw(simulation.getState(), params, appendTrail, still, ballState);
         }
@@ -791,7 +831,7 @@ function bootstrap() {
         try {
             primeAudioContextSync();
             if (!audioEngine) {
-                audioEngine = new AudioEngine(savedSoundBank);
+                audioEngine = new AudioEngine(selectedBundle, selectedSoundBank, audioUiTarget);
                 recorder = new RecorderController(setStatus, downloadsEl);
             }
             const audioOk = await ensureAudioRunning();

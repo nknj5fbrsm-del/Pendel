@@ -229,6 +229,17 @@
         box-shadow: 0 0 0 1px rgba(10, 132, 255, 0.15);
       }
 
+      .bundle-description {
+        margin: 0;
+        font-size: 0.75rem;
+        line-height: 1.45;
+        color: var(--label-secondary);
+      }
+
+      .bank-picker[hidden] {
+        display: none;
+      }
+
       .section {
         border-radius: var(--radius-md);
         border: 1px solid var(--hairline);
@@ -1034,7 +1045,12 @@
 
         <nav class="controls" aria-label="Steuerung">
           <div class="section section-static">
-            <div class="bank-picker">
+            <div class="bundle-picker bank-picker">
+              <p class="bank-picker-label">Audio-Bundle</p>
+              <div class="bank-chips" id="audioBundles"></div>
+              <p class="bundle-description" id="bundleDescription"></p>
+            </div>
+            <div class="bank-picker" id="soundBankSection">
               <p class="bank-picker-label">Soundbank</p>
               <div class="bank-chips" id="soundBanks"></div>
             </div>
@@ -1393,6 +1409,6 @@
       </main>
     </div>
 
-    <script type="module" src="./dist/main.js?v=soundbanks"></script>
+    <script type="module" src="./dist/main.js?v=bundles2"></script>
   </body>
 </html>
