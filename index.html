@@ -178,6 +178,57 @@
         gap: 0.65rem;
       }
 
+      .bank-picker {
+        display: flex;
+        flex-direction: column;
+        gap: 0.45rem;
+      }
+
+      .bank-picker-label {
+        margin: 0;
+        font-size: 0.6875rem;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--label-tertiary);
+      }
+
+      .bank-chips {
+        display: flex;
+        flex-direction: column;
+        gap: 0.35rem;
+      }
+
+      .bank-chip {
+        width: 100%;
+        padding: 0.5rem 0.7rem;
+        border-radius: var(--radius-sm);
+        border: 1px solid var(--hairline);
+        background: rgba(255, 255, 255, 0.04);
+        color: var(--label-secondary);
+        font-size: 0.75rem;
+        font-weight: 500;
+        letter-spacing: -0.01em;
+        text-align: left;
+        cursor: pointer;
+        transition:
+          background 0.2s var(--ease-out),
+          border-color 0.2s var(--ease-out),
+          color 0.2s var(--ease-out);
+      }
+
+      .bank-chip:hover {
+        background: rgba(255, 255, 255, 0.07);
+        color: var(--label-primary);
+      }
+
+      .bank-chip.active {
+        border-color: rgba(10, 132, 255, 0.45);
+        background: rgba(10, 132, 255, 0.12);
+        color: #9ecfff;
+        box-shadow: 0 0 0 1px rgba(10, 132, 255, 0.15);
+      }
+
       .section {
         border-radius: var(--radius-md);
         border: 1px solid var(--hairline);
@@ -982,6 +1033,13 @@
         </header>
 
         <nav class="controls" aria-label="Steuerung">
+          <div class="section section-static">
+            <div class="bank-picker">
+              <p class="bank-picker-label">Soundbank</p>
+              <div class="bank-chips" id="soundBanks"></div>
+            </div>
+          </div>
+
           <details class="section" open>
             <summary class="section-head">
               <span class="section-title-wrap">
@@ -1335,6 +1393,6 @@
       </main>
     </div>
 
-    <script type="module" src="./dist/main.js?v=trail-vis"></script>
+    <script type="module" src="./dist/main.js?v=soundbanks"></script>
   </body>
 </html>
