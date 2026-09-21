@@ -1,6 +1,7 @@
 import { AudioEngine, AUDIO_BUNDLE_STORAGE_KEY, parseAudioBundleId, } from "./audio/engine.js";
 import { createSnapshot } from "./audio/simulation-snapshot.js";
 import { BundleController, EffectsController, faderReadout, MixerController, SoundBankController, syncMixerFaderDom, syncReverbFaderDom, updateFaderVisual, } from "./audio/ui-controls.js";
+import { CueCapture } from "./audio/midi.js";
 import { parseSoundBankId, SOUND_BANK_STORAGE_KEY } from "./audio/types.js";
 class DoublePendulumSimulation {
     constructor(params, initial) {
@@ -165,9 +166,10 @@ class FlyingBallSimulation {
     }
 }
 class RecorderController {
-    constructor(setStatus, downloadsEl) {
+    constructor(setStatus, downloadsEl, takeMidi) {
         this.setStatus = setStatus;
         this.downloadsEl = downloadsEl;
+        this.takeMidi = takeMidi;
         this.streamDestination = null;
         this.tapConnected = false;
         this.recorder = null;
@@ -240,11 +242,19 @@ class RecorderController {
             const wavBlob = await decodeToWavBlob(sourceBlob);
             const wavUrl = URL.createObjectURL(wavBlob);
             this.downloadsEl.appendChild(createAnchor(wavUrl, "pendel-audio.wav", "Download .wav"));
-            this.setStatus("Aufnahme bereit (.webm/.wav)", "active");
         }
         catch {
-            this.setStatus("Aufnahme bereit (.webm)", "active");
+            // WAV optional
         }
+        const midi = this.takeMidi();
+        if (midi) {
+            const copy = new ArrayBuffer(midi.byteLength);
+            new Uint8Array(copy).set(midi);
+            const midiUrl = URL.createObjectURL(new Blob([copy], { type: "audio/midi" }));
+            this.downloadsEl.appendChild(createAnchor(midiUrl, "pendel-cue.mid", "Download .mid"));
+        }
+        const kinds = [...this.downloadsEl.querySelectorAll("a")].map((el) => el.textContent?.replace("Download ", "") ?? "");
+        this.setStatus(`Aufnahme bereit (${kinds.join("/")})`, "active");
     }
 }
 class Renderer {
@@ -687,6 +697,7 @@ function bootstrap() {
     document.addEventListener("touchstart", unlockOnTouch, { capture: true, passive: true });
     let audioEngine = null;
     let recorder = null;
+    const cueCapture = new CueCapture();
     let audioBootstrapping = false;
     const savedBundle = parseAudioBundleId(localStorage.getItem(AUDIO_BUNDLE_STORAGE_KEY));
     const savedSoundBank = parseSoundBankId(localStorage.getItem(SOUND_BANK_STORAGE_KEY));
@@ -750,6 +761,7 @@ function bootstrap() {
     };
     const stopSimulation = () => {
         if (recording) {
+            cueCapture.stop();
             recorder?.release();
             recording = false;
             recordButton.classList.remove("active");
@@ -795,7 +807,10 @@ function bootstrap() {
                     speed: flyingBall.getSpeed(),
                 }, still, dt / subSteps);
                 const events = audioEngine?.detectDynamics(Tone.now(), previousState, stepState, prevGeom, nextGeom, simulation.kineticEnergy());
-                const flash = events ? audioEngine?.onDynamics(Tone.now(), events, subSnap) : undefined;
+                const now = Tone.now();
+                const flash = events ? audioEngine?.onDynamics(now, events, subSnap) : undefined;
+                if (events)
+                    cueCapture.ingestDynamics(now, events, subSnap);
                 if (flash)
                     renderer.applySoundFlash(flash);
                 previousState = stepState;
@@ -809,8 +824,10 @@ function bootstrap() {
                 y: flyingBall.getState().y,
                 speed: flyingBall.getSpeed(),
             }, still, dt);
-            audioEngine?.onBallCollisions(Tone.now(), ballEvents, frameSnap);
-            audioEngine?.onFrame(Tone.now(), frameSnap);
+            const ballNow = Tone.now();
+            audioEngine?.onBallCollisions(ballNow, ballEvents, frameSnap);
+            cueCapture.ingestBall(ballNow, ballEvents, frameSnap);
+            audioEngine?.onFrame(ballNow, frameSnap);
             ballState = flyingBall.getState();
             renderer.draw(simulation.getState(), params, appendTrail, still, ballState);
         }
@@ -832,7 +849,7 @@ function bootstrap() {
             primeAudioContextSync();
             if (!audioEngine) {
                 audioEngine = new AudioEngine(selectedBundle, selectedSoundBank, audioUiTarget);
-                recorder = new RecorderController(setStatus, downloadsEl);
+                recorder = new RecorderController(setStatus, downloadsEl, () => cueCapture.toMidi());
             }
             const audioOk = await ensureAudioRunning();
             if (!audioOk) {
@@ -885,11 +902,13 @@ function bootstrap() {
         primeAudioContextSync();
         void ensureAudioRunning();
         if (!recording) {
+            cueCapture.start(Tone.now());
             recorder.start();
             recording = true;
             recordButton.classList.add("active");
             return;
         }
+        cueCapture.stop();
         recorder.stop();
         recording = false;
         recordButton.classList.remove("active");
